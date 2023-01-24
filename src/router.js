@@ -1,10 +1,15 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import store from './store'
+
 import Home from './views/Home.vue'
+import SignUp from './views/SignUp.vue'
+import SignIn from './views/SignIn.vue'
+import Dashboard from './views/Dashboard.vue'
 
 Vue.use(Router)
 
-export default new Router({
+const router = new Router({
   mode: 'history',
   base: process.env.BASE_URL,
   routes: [
@@ -14,12 +19,49 @@ export default new Router({
       component: Home
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard,
+      meta: {
+        auth: true
+      }
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: SignUp,
+      meta: {
+        guest: true
+      }
+    },
+    {
+      path: '/signin',
+      name: 'signin',
+      component: SignIn,
+      meta: {
+        guest: true
+      }
     }
   ]
 })
+
+router.beforeEach((to, from, next) => {
+  if (!store.getters.user.loggedIn && to.meta.auth) {
+    next({
+      name: 'signin',
+      query: {
+        redirect: to.fullPath
+      }
+    })
+  }
+
+  if (store.getters.user.loggedIn && to.meta.guest) {
+    next({
+      name: 'home'
+    })
+  }
+
+  next()
+})
+
+export default router
